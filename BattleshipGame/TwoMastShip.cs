@@ -6,8 +6,12 @@ using System.Threading.Tasks;
 
 namespace BattleshipGame
 {
-    internal class TwoMastShip : Ship
+    internal class TwoMastShip : CompositeShip
     {
-        public TwoMastShip() : base(2) { }
+        public TwoMastShip()
+        {
+            AddComponent(new Ship(1));
+            AddComponent(new Ship(1));
+        }
     }
 }

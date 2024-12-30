@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace BattleshipGame
 {
-    internal class Ship
+    internal class Ship : ShipComponent
     {
-        public int Size { get; private set; }
-        public List<Tuple<int, int>> Position { get; private set; }
-        public int HitParts { get; private set; } = 0;
+        public override int Size { get; protected set; }
+        public override List<Tuple<int, int>> Position { get; protected set; }
+        public override int HitParts { get; protected set; } = 0;
 
         public Ship(int size)
         {
@@ -18,12 +18,12 @@ namespace BattleshipGame
             Position = new List<Tuple<int, int>>();
         }
 
-        public void TakeHit()
+        public override void TakeHit()
         {
             HitParts++;
         }
 
-        public bool IsSunk()
+        public override bool IsSunk()
         {
             return HitParts >= Size;
         }

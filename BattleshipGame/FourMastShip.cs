@@ -6,8 +6,14 @@ using System.Threading.Tasks;
 
 namespace BattleshipGame
 {
-    internal class FourMastShip : Ship
+    internal class FourMastShip : CompositeShip
     {
-        public FourMastShip() : base(4) { }
+        public FourMastShip()
+        {
+            AddComponent(new Ship(1));
+            AddComponent(new Ship(1));
+            AddComponent(new Ship(1));
+            AddComponent(new Ship(1));
+        }
     }
 }
