@@ -8,14 +8,14 @@ namespace BattleshipGame
 {
     internal class Fleet
     {
-        public List<Ship> Ships { get; private set; } = new List<Ship>();
+        public List<CompositeShip> Ships { get; private set; } = new List<CompositeShip>();
 
-        public void AddShip(Ship ship)
+        public void AddShip(CompositeShip ship)
         {
             Ships.Add(ship);
         }
 
-        public void RemoveShip(Ship ship)
+        public void RemoveShip(CompositeShip ship)
         {
             Ships.Remove(ship);
         }

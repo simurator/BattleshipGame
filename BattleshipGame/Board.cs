@@ -4,6 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
+internal enum PlacementStatus
+{
+    Success,
+    OutOfBounds,
+    Overlap
+}
+
 namespace BattleshipGame
 {
     internal class Board
@@ -27,39 +35,7 @@ namespace BattleshipGame
             }
         }
 
-        public bool PlaceShip(Ship ship, int x, int y, bool isHorizontal)
-        {
-            if (isHorizontal)
-            {
-                if (x + ship.Size > _size) return false;
-                for (int i = 0; i < ship.Size; i++)
-                {
-                    if (Grid[y][x + i].ContainsShipPart) return false;
-                }
-
-                for (int i = 0; i < ship.Size; i++)
-                {
-                    Grid[y][x + i].ContainsShipPart = true;
-                    ship.Position.Add(Tuple.Create(x + i, y));
-                }
-            }
-            else
-            {
-                if (y + ship.Size > _size) return false;
-                for (int i = 0; i < ship.Size; i++)
-                {
-                    if (Grid[y + i][x].ContainsShipPart) return false;
-                }
-
-                for (int i = 0; i < ship.Size; i++)
-                {
-                    Grid[y + i][x].ContainsShipPart = true;
-                    ship.Position.Add(Tuple.Create(x, y + i));
-                }
-            }
-
-            return true;
-        }
+        
 
         public bool RegisterHit(int x, int y)
         {
@@ -71,5 +47,41 @@ namespace BattleshipGame
             tile.IsHit = true;
             return tile.ContainsShipPart;
         }
+        public PlacementStatus PlaceShip(CompositeShip ship, int x, int y, bool isHorizontal)
+        {
+            if (isHorizontal)
+            {
+                if (x + ship.Size > _size) return PlacementStatus.OutOfBounds;
+
+                for (int i = 0; i < ship.Size; i++)
+                {
+                    if (Grid[y][x + i].ContainsShipPart) return PlacementStatus.Overlap;
+                }
+
+                for (int i = 0; i < ship.Size; i++)
+                {
+                    Grid[y][x + i].ContainsShipPart = true;
+                    ship.Position.Add(Tuple.Create(x + i, y));
+                }
+            }
+            else
+            {
+                if (y + ship.Size > _size) return PlacementStatus.OutOfBounds;
+
+                for (int i = 0; i < ship.Size; i++)
+                {
+                    if (Grid[y + i][x].ContainsShipPart) return PlacementStatus.Overlap;
+                }
+
+                for (int i = 0; i < ship.Size; i++)
+                {
+                    Grid[y + i][x].ContainsShipPart = true;
+                    ship.Position.Add(Tuple.Create(x, y + i));
+                }
+            }
+
+            return PlacementStatus.Success;
+        }
     }
+
 }

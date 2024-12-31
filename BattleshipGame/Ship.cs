@@ -18,9 +18,17 @@ namespace BattleshipGame
             Position = new List<Tuple<int, int>>();
         }
 
-        public override void TakeHit()
+        public override void TakeHit(int x, int y)
         {
-            HitParts++;
+            // Check if the hit coordinates match this part's position
+            var hitPart = Position.FirstOrDefault(p => p.Item1 == x && p.Item2 == y);
+
+            if (hitPart != null && !IsSunk())
+            {
+                // Register the hit on this part
+                HitParts++;
+                Console.WriteLine($"Ship part at ({x}, {y}) is hit!");
+            }
         }
 
         public override bool IsSunk()

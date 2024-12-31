@@ -6,11 +6,9 @@ using System.Threading.Tasks;
 
 namespace BattleshipGame
 {
-    internal class OneMastShip : CompositeShip
+    internal abstract class GameState
     {
-        public OneMastShip()
-        {
-            AddComponent(new Ship(1));
-        }
+        public abstract void NextState(Game game);
+        public abstract void Handle(Game game);
     }
 }

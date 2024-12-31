@@ -12,7 +12,7 @@ namespace BattleshipGame
         public abstract List<Tuple<int, int>> Position { get; protected set; }
         public abstract int HitParts { get; protected set; }
 
-        public abstract void TakeHit();
+        public abstract void TakeHit(int x, int y);
         public abstract bool IsSunk();
     }
 }
