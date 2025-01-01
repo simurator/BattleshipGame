@@ -16,37 +16,39 @@ namespace BattleshipGame
 {
     internal class Board
     {
-        public List<List<Tile>> Grid { get; private set; }
+        public List<Tile> Grid { get; set; }
         private int _size;
 
-        public Board(int size)
-        {
-            _size = size;
-            Grid = new List<List<Tile>>();
+        public int GridSize => _size;
 
-            for (int i = 0; i < size; i++)
+        public Board(int gridSize)
+        {
+            _size = gridSize;
+            Grid = new List<Tile>();
+
+            // Initialize grid with tiles
+            for (int i = 0; i < gridSize; i++)
             {
-                var row = new List<Tile>();
-                for (int j = 0; j < size; j++)
+                for (int j = 0; j < gridSize; j++)
                 {
-                    row.Add(new Tile());
+                    Grid.Add(new Tile(i, j));  // Create Tile for each position
                 }
-                Grid.Add(row);
             }
         }
 
-        
-
+        // Registers a hit on the board
         public bool RegisterHit(int x, int y)
         {
-            if (x < 0 || x >= _size || y < 0 || y >= _size) return false;
-
-            var tile = Grid[y][x];
-            if (tile.IsHit) return false;
-
-            tile.IsHit = true;
-            return tile.ContainsShipPart;
+            var hitCell = Grid.FirstOrDefault(cell => cell.X == x && cell.Y == y);
+            if (hitCell != null)
+            {
+                hitCell.IsHit = true;
+                return true;
+            }
+            return false;
         }
+
+        // Places a ship on the board, ensuring no overlap and staying within bounds
         public PlacementStatus PlaceShip(CompositeShip ship, int x, int y, bool isHorizontal)
         {
             if (isHorizontal)
@@ -55,12 +57,14 @@ namespace BattleshipGame
 
                 for (int i = 0; i < ship.Size; i++)
                 {
-                    if (Grid[y][x + i].ContainsShipPart) return PlacementStatus.Overlap;
+                    var cell = Grid.FirstOrDefault(c => c.X == x + i && c.Y == y);
+                    if (cell == null || cell.ContainsShipPart) return PlacementStatus.Overlap;
                 }
 
                 for (int i = 0; i < ship.Size; i++)
                 {
-                    Grid[y][x + i].ContainsShipPart = true;
+                    var cell = Grid.First(c => c.X == x + i && c.Y == y);
+                    cell.ContainsShipPart = true;
                     ship.Position.Add(Tuple.Create(x + i, y));
                 }
             }
@@ -70,18 +74,27 @@ namespace BattleshipGame
 
                 for (int i = 0; i < ship.Size; i++)
                 {
-                    if (Grid[y + i][x].ContainsShipPart) return PlacementStatus.Overlap;
+                    var cell = Grid.FirstOrDefault(c => c.X == x && c.Y == y + i);
+                    if (cell == null || cell.ContainsShipPart) return PlacementStatus.Overlap;
                 }
 
                 for (int i = 0; i < ship.Size; i++)
                 {
-                    Grid[y + i][x].ContainsShipPart = true;
+                    var cell = Grid.First(c => c.X == x && c.Y == y + i);
+                    cell.ContainsShipPart = true;
                     ship.Position.Add(Tuple.Create(x, y + i));
                 }
             }
 
             return PlacementStatus.Success;
         }
-    }
 
+        public Tile GetTile(int x, int y)
+        {
+            int index = y * GridSize + x;
+            return Grid[index];
+        }
+
+    }
 }
+

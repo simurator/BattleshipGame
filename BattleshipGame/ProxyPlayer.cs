@@ -11,7 +11,7 @@ namespace BattleshipGame
         private Player RealPlayer;
 
         // Constructor that accepts a Player type for flexibility
-        public ProxyPlayer(string name, int boardSize, int difficulty) : base(name, boardSize)
+        public ProxyPlayer(string name, int boardSize, int difficulty) : base(name)
         {
             // Creating an AIPlayer or HumanPlayer depending on difficulty or other factors
             if (difficulty > 0)

@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BattleshipGame
 {
@@ -18,13 +15,23 @@ namespace BattleshipGame
 
         public override void Execute()
         {
-            PreviousState = EnemyBoard.Grid[Target.Item2][Target.Item1].IsHit;
+            // Calculate the index for the 1D list based on coordinates
+            int index = Target.Item2 * EnemyBoard.GridSize + Target.Item1;
+
+            // Save the previous state (hit or miss) of the tile
+            PreviousState = EnemyBoard.Grid[index].IsHit;
+
+            // Register the hit or miss
             Result = EnemyBoard.RegisterHit(Target.Item1, Target.Item2) ? "Hit" : "Miss";
         }
 
         public override void Undo()
         {
-            EnemyBoard.Grid[Target.Item2][Target.Item1].IsHit = (bool)PreviousState;
+            // Calculate the index for the 1D list based on coordinates
+            int index = Target.Item2 * EnemyBoard.GridSize + Target.Item1;
+
+            // Restore the previous state of the tile
+            EnemyBoard.Grid[index].IsHit = (bool)PreviousState;
         }
     }
 }

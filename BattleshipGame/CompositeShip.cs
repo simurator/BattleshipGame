@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,45 +11,43 @@ namespace BattleshipGame
     {
         private readonly List<ShipComponent> _components = new List<ShipComponent>();
 
-        public override int Size
-        {
-            get => _components.Sum(component => component.Size);
-            protected set => throw new NotImplementedException("CompositeShip Size is derived from its components and cannot be set directly.");
-        }
+        
 
         public override List<Tuple<int, int>> Position
         {
             get => _components.SelectMany(component => component.Position).ToList();
-            protected set => throw new NotImplementedException("CompositeShip Position is derived from its components and cannot be set directly.");
+            set => throw new NotImplementedException();
+        }
+
+        public override int Size
+        {
+            get => _components.Sum(component => component.Size);
+            set => throw new NotImplementedException("CompositeShip Size is derived from its components and cannot be set directly.");
         }
 
         public override int HitParts
         {
             get => _components.Sum(component => component.HitParts);
-            protected set => throw new NotImplementedException("CompositeShip HitParts is derived from its components and cannot be set directly.");
+            set => throw new NotImplementedException("CompositeShip HitParts is derived from its components and cannot be set directly.");
         }
 
 
-        public void AddComponent(ShipComponent component)
-        {
-            _components.Add(component);
-        }
-
-        public void RemoveComponent(ShipComponent component)
-        {
-            _components.Remove(component);
-        }
 
         public override void TakeHit(int x, int y)
         {
-            // Check if the hit coordinates match this part's position
+            // Sprawdź, czy dany punkt na statku został trafiony
             var hitPart = Position.FirstOrDefault(p => p.Item1 == x && p.Item2 == y);
 
-            if (hitPart != null && !IsSunk())
+            if (hitPart != null && !IsSunk())  // Jeśli część statku została trafiona
             {
-                // Register the hit on this part
-                HitParts++;
+                HitParts++;  // Zwiększ licznik trafionych części
                 Console.WriteLine($"Ship part at ({x}, {y}) is hit!");
+
+                // Sprawdź, czy statek został zatopiony
+                if (IsSunk())
+                {
+                    Console.WriteLine("The ship has been sunk!");
+                }
             }
         }
 
@@ -56,10 +55,16 @@ namespace BattleshipGame
         {
             return _components.All(component => component.IsSunk());
         }
-
-        public List<ShipComponent> GetComponents()
+        public override void AddComponent(ShipComponent component)
         {
-            return new List<ShipComponent>(_components);
+            if (component == null)
+            {
+                throw new ArgumentNullException(nameof(component), "Component cannot be null.");
+            }
+            _components.Add(component);
         }
+
     }
+
+
 }

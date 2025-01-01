@@ -8,7 +8,7 @@ namespace BattleshipGame
 {
     internal class HumanPlayer : Player
     {
-        public HumanPlayer(string name, int boardSize) : base(name, boardSize) { }
+        public HumanPlayer(string name, int boardSize) : base(name) { }
 
         public override void PlaceShips(Board board)
         {

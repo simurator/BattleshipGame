@@ -10,7 +10,7 @@ namespace BattleshipGame
     {
         private int Difficulty;
 
-        public AIPlayer(string name, int difficulty) : base(name, 10)  // Default 10x10 board size
+        public AIPlayer(string name, int difficulty) : base(name)  // Default 10x10 board size
         {
             Difficulty = difficulty;
         }

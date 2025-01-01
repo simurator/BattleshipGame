@@ -11,27 +11,21 @@ class Program
         // Configure the game using GameBuilder
         var gameBuilder = new GameBuilder()
             .SetBoardSize(10, 10) // 10x10 board
-            .SetMode("Standard") // Game mode
+            .SetMode("Standard")
             .SetShipTypes(new List<Tuple<int, int>>
             {
-                Tuple.Create(1, 4), // Four one-mast ships
-                Tuple.Create(2, 3), // Three two-mast ships
-                Tuple.Create(3, 2), // Two three-mast ships
-                Tuple.Create(4, 1)  // One four-mast ship
+                Tuple.Create(1, 4), // One 4-mast ship
+                Tuple.Create(2, 3), // Two 3-mast ships
+                Tuple.Create(3, 2), // Three 2-mast ships
+                Tuple.Create(4, 1)  // Four 1-mast ships
             });
 
-        Game game = gameBuilder.Build();
+        var game = gameBuilder.Build();
 
-        // Place ships for each player
-        foreach (var player in game.Players)
-        {
-            Console.WriteLine($"{player.Name}, place your ships on the board.");
-            player.PlaceShips(game.Board);
-        }
-
-        // Start the game
+        // Start the game setup
         game.StartGame();
 
+        // Main game loop
         while (!(game.State is EndGameState))
         {
             game.State.Handle(game);

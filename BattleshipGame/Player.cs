@@ -10,36 +10,37 @@ namespace BattleshipGame
     {
         public string Name { get; private set; }
         public Fleet Fleet { get; private set; }
-        public Board Board { get; private set; }
 
-        public Player(string name, int boardSize)
+        public Player(string name)
         {
             Name = name;
             Fleet = new Fleet();
-            Board = new Board(boardSize);
         }
 
-        public virtual bool MakeMove(int x, int y, Board enemyBoard)
+        public virtual bool MakeMove(int x, int y, Board board)
         {
-            return enemyBoard.RegisterHit(x, y);
+            return board.RegisterHit(x, y);
         }
 
-        // Accept a Board parameter for consistency across subclasses
         public virtual void PlaceShips(Board board)
         {
             foreach (var ship in Fleet.Ships)
             {
-                bool placed = false;
-                while (!placed)
+                PlacementStatus placed= PlacementStatus.Success;
+                while (placed==PlacementStatus.Success)
                 {
-                    int x = new Random().Next(0, board.Grid.Count);
-                    int y = new Random().Next(0, board.Grid.Count);
-                    bool isHorizontal = new Random().Next(0, 2) == 0;
+                    Console.WriteLine($"Placing ship of size {ship.Size}.");
+                    Console.Write("Enter X coordinate: ");
+                    int x = int.Parse(Console.ReadLine());
+                    Console.Write("Enter Y coordinate: ");
+                    int y = int.Parse(Console.ReadLine());
+                    Console.Write("Place horizontally? (y/n): ");
+                    bool isHorizontal = Console.ReadLine()?.ToLower() == "y";
 
-                    PlacementStatus status = board.PlaceShip(ship, x, y, isHorizontal);
-                    if (status == PlacementStatus.Success)
+                    placed = board.PlaceShip(ship, x, y, isHorizontal);
+                    if (placed==PlacementStatus.OutOfBounds|| placed==PlacementStatus.Overlap)
                     {
-                        placed = true;
+                        Console.WriteLine("Invalid placement. Try again.");
                     }
                 }
             }
