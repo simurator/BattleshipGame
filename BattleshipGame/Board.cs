@@ -43,10 +43,16 @@ namespace BattleshipGame
             if (hitCell != null)
             {
                 hitCell.IsHit = true;
+                Console.WriteLine($"Hit registered at ({x}, {y})!");
+                DisplayBoard();
                 return true;
             }
+
+            Console.WriteLine($"Miss at ({x}, {y})!");
+            DisplayBoard();
             return false;
         }
+
 
         // Places a ship on the board, ensuring no overlap and staying within bounds
         public PlacementStatus PlaceShip(CompositeShip ship, int x, int y, bool isHorizontal)
@@ -85,8 +91,29 @@ namespace BattleshipGame
                     ship.Position.Add(Tuple.Create(x, y + i));
                 }
             }
-
+            DisplayBoard();
             return PlacementStatus.Success;
+        }
+
+        public void DisplayBoard()
+        {
+            Console.WriteLine("Current Board State:");
+            for (int y = 0; y < _size; y++)
+            {
+                for (int x = 0; x < _size; x++)
+                {
+                    var tile = GetTile(x, y);
+                    if (tile.IsHit)
+                    {
+                        Console.Write(tile.ContainsShipPart ? "X " : "O "); // "X" for hit ship part, "O" for missed shot
+                    }
+                    else
+                    {
+                        Console.Write(tile.ContainsShipPart ? "S " : ". "); // "S" for unhit ship part, "." for empty water
+                    }
+                }
+                Console.WriteLine(); // Move to the next row
+            }
         }
 
         public Tile GetTile(int x, int y)
