@@ -3,104 +3,141 @@ using System.Linq;
 
 
 
-    
+
 
 namespace BattleshipGame
+{
+    internal class AttackState : GameState
     {
-        internal class AttackState : GameState
-        {
-            public override void NextState(Game game)
-            {
-                // Check if any player has lost their fleet
-                if (game.Players.Any(player => player.Fleet.IsDefeated()))
-                {
-                    game.State = new EndGameState();  // Transition to EndGameState
-                    Console.WriteLine("Game state changed to EndGameState.");
-                }
-                else
-                {
-                    game.SwitchTurns();  // Switch to the next player
-                    Console.WriteLine("Game state changed to SwitchTurns.");
-                }
-            }
-
         public override void Handle(Game game)
         {
             var currentPlayer = game.Players[game.CurrentPlayerIndex];
-            Console.WriteLine($"{currentPlayer.Name}, it's your turn to attack.");
+            var enemyBoard = game.GetEnemyBoard();
+
+            Console.WriteLine($"\n{currentPlayer.Name}'s turn to attack!");
+            Console.WriteLine("\nEnemy's board:");
+            DisplayBoardForAttack(enemyBoard);
 
             int x = -1, y = -1;
-
-            // Pobierz poprawne współrzędne
             GetValidCoordinates(game, ref x, ref y);
 
-            // Zarejestruj trafienie na planszy, przekazując obiekt game
-            bool hit = game.Board.RegisterHit(x, y);
+            bool hit = enemyBoard.RegisterHit(x, y);
 
-            // Obsłuż wynik ataku
             if (hit)
             {
-                Console.WriteLine($"{currentPlayer.Name} hit a ship at ({x}, {y})!");
-
-                // Zaktualizuj flotę przeciwnika po trafieniu
+                Console.WriteLine($"\n{currentPlayer.Name} hit a ship at ({x}, {y})!");
                 UpdateFleetWithHit(game, x, y);
             }
             else
             {
-                Console.WriteLine($"{currentPlayer.Name} missed at ({x}, {y}).");
+                Console.WriteLine($"\n{currentPlayer.Name} missed at ({x}, {y}).");
             }
 
-            // Przejdź do następnego stanu gry po ataku
+            Console.WriteLine("\nPress any key to continue...");
+            Console.ReadKey();
+            Console.Clear();
+
             NextState(game);
+        }
+
+        public override void NextState(Game game)
+        {
+            // Sprawdź czy któryś gracz przegrał
+            var enemyPlayer = game.Players[(game.CurrentPlayerIndex + 1) % game.Players.Count];
+            if (enemyPlayer.Fleet.IsDefeated())
+            {
+                game.State = new EndGameState();
+                Console.WriteLine($"{game.Players[game.CurrentPlayerIndex].Name} wins!");
+            }
+            else
+            {
+                // Przełącz na następnego gracza
+                game.SwitchTurns();
+            }
+        }
+
+        private void DisplayBoardForAttack(Board board)
+        {
+            Console.WriteLine("  0 1 2 3 4 5 6 7 8 9");
+            for (int y = 0; y < board.GridSize; y++)
+            {
+                Console.Write($"{y} ");
+                for (int x = 0; x < board.GridSize; x++)
+                {
+                    var tile = board.GetTile(x, y);
+                    if (tile.IsHit)
+                    {
+                        Console.Write(tile.ContainsShipPart ? "X " : "O ");
+                    }
+                    else
+                    {
+                        Console.Write(". "); // Ukrywa statki przeciwnika
+                    }
+                }
+                Console.WriteLine();
+            }
+        }
+
+        private void UpdateFleetWithHit(Game game, int x, int y)
+        {
+            var enemyPlayer = game.Players[(game.CurrentPlayerIndex + 1) % game.Players.Count];
+
+            foreach (var ship in enemyPlayer.Fleet.Ships)
+            {
+                if (ship.Position.Any(pos => pos.Item1 == x && pos.Item2 == y))
+                {
+                    ship.TakeHit(x, y);
+                    if (ship.IsSunk())
+                    {
+                        Console.WriteLine("Ship sunk!");
+                    }
+                    break;
+                }
+            }
         }
 
 
         // Method to handle coordinate input and ensure it's valid
         private void GetValidCoordinates(Game game, ref int x, ref int y)
+        {
+            var enemyBoard = game.GetEnemyBoard();
+            bool validInput = false;
+
+            while (!validInput)
             {
-                bool validInput = false;
-
-                while (!validInput)
+                try
                 {
-                    try
+                    Console.Write($"Enter X coordinate (0 to {enemyBoard.GridSize - 1}): ");
+                    x = int.Parse(Console.ReadLine());
+
+                    Console.Write($"Enter Y coordinate (0 to {enemyBoard.GridSize - 1}): ");
+                    y = int.Parse(Console.ReadLine());
+
+                    // Sprawdź czy koordynaty są w granicach planszy
+                    if (x >= 0 && x < enemyBoard.GridSize && y >= 0 && y < enemyBoard.GridSize)
                     {
-                        Console.Write("Enter X coordinate (0 to {0}): ", game.Board.Grid.Count - 1);
-                        x = int.Parse(Console.ReadLine());
-
-                        Console.Write("Enter Y coordinate (0 to {0}): ", game.Board.Grid.Count - 1);
-                        y = int.Parse(Console.ReadLine());
-
-                        if (x >= 0 && x < game.Board.Grid.Count && y >= 0 && y < game.Board.Grid.Count)
+                        // Sprawdź czy pole nie było już atakowane
+                        var tile = enemyBoard.GetTile(x, y);
+                        if (!tile.IsHit)
                         {
-                            validInput = true;  // Valid input
+                            validInput = true;
                         }
                         else
                         {
-                            Console.WriteLine("Coordinates are out of bounds. Try again.");
+                            Console.WriteLine("This position has already been attacked. Choose different coordinates.");
                         }
                     }
-                    catch (FormatException)
+                    else
                     {
-                        Console.WriteLine("Invalid input. Please enter valid integers for coordinates.");
+                        Console.WriteLine("Coordinates are out of bounds. Try again.");
                     }
                 }
-            }
-
-            // Method to update the Fleet after a successful hit
-            private void UpdateFleetWithHit(Game game, int x, int y)
-            {
-                // Check which player's fleet is affected by the hit
-                var enemyPlayer = game.Players[(game.CurrentPlayerIndex + 1) % game.Players.Count];
-
-                foreach (var ship in enemyPlayer.Fleet.Ships)
+                catch (FormatException)
                 {
-                    if (ship.Position.Any(pos => pos.Item1 == x && pos.Item2 == y))
-                    {
-                        ship.TakeHit(x, y);
-                        break;
-                    }
+                    Console.WriteLine("Invalid input. Please enter valid integers for coordinates.");
                 }
             }
         }
     }
+}
 

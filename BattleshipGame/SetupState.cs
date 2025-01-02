@@ -1,27 +1,42 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BattleshipGame
+﻿namespace BattleshipGame
 {
     internal class SetupState : GameState
     {
-        public override void NextState(Game game)
-        {
-            game.State = new AttackState();
-            Console.WriteLine("Game state changed to AttackState.");
-        }
+        private int currentSetupPlayer = 0;
 
         public override void Handle(Game game)
         {
-            Console.WriteLine("Players are placing their ships.");
-            foreach (var player in game.Players)
+            if (currentSetupPlayer < game.Players.Count)
             {
-                player.PlaceShips(game.Board);
+                Console.WriteLine($"\n{game.Players[currentSetupPlayer].Name}'s turn to place ships:");
+                game.Players[currentSetupPlayer].PlaceShips(game.Boards[currentSetupPlayer]);
+                currentSetupPlayer++;
+
+                if (currentSetupPlayer < game.Players.Count)
+                {
+                    Console.WriteLine("\nPress any key to continue to next player's setup...");
+                    Console.ReadKey();
+                    Console.Clear();
+                    Handle(game);  // Rekurencyjnie obsłuż następnego gracza
+                }
+                else
+                {
+                    Console.WriteLine("\nAll ships placed. Press any key to start the battle!");
+                    Console.ReadKey();
+                    Console.Clear();
+                    NextState(game);
+                }
             }
-            NextState(game);
+        }
+
+        public override void NextState(Game game)
+        {
+            if (currentSetupPlayer >= game.Players.Count)
+            {
+                game.State = new AttackState();
+                game.CurrentPlayerIndex = 0;  // Zaczynamy od pierwszego gracza
+                Console.WriteLine("Moving to attack phase!");
+            }
         }
     }
 }

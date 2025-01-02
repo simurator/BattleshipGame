@@ -44,34 +44,43 @@ namespace BattleshipGame
                 throw new InvalidOperationException("Game configuration is incomplete.");
             }
 
-            // Create the board
-            var board = new Board(BoardSize.Item1);
-
-            // Create players: One HumanPlayer and one ProxyPlayer (with AI)
+            // Create players
             var players = new List<Player>
             {
-                new HumanPlayer("Player 1", BoardSize.Item1), // Human player with board size
-                new ProxyPlayer("Player 2", BoardSize.Item1, Difficulty) // Proxy player with difficulty
+                new HumanPlayer("Player 1", BoardSize.Item1)
             };
+
+            // Add second player based on mode
+            if (Mode == "PvAI")
+            {
+                players.Add(new ProxyPlayer("AI Player", BoardSize.Item1, Difficulty));
+            }
+            else
+            {
+                players.Add(new HumanPlayer("Player 2", BoardSize.Item1));
+            }
 
             // Add ships to players' fleets
             foreach (var player in players)
             {
                 foreach (var shipType in ShipTypes)
                 {
-                    CompositeShip ship = shipType.Item1 switch
+                    for (int i = 0; i < shipType.Item2; i++) // Item2 to liczba statków danego typu
                     {
-                        1 => new OneMastShip(),
-                        2 => new TwoMastShip(),
-                        3 => new ThreeMastShip(),
-                        4 => new FourMastShip(),
-                        _ => throw new InvalidOperationException("Invalid ship type.")
-                    };
-                    player.Fleet.AddShip(ship);
+                        CompositeShip ship = shipType.Item1 switch
+                        {
+                            1 => new OneMastShip(),
+                            2 => new TwoMastShip(),
+                            3 => new ThreeMastShip(),
+                            4 => new FourMastShip(),
+                            _ => throw new InvalidOperationException("Invalid ship type.")
+                        };
+                        player.Fleet.AddShip(ship);
+                    }
                 }
             }
 
-            return new Game(board, players, Mode); // Return the constructed game
+            return new Game(BoardSize.Item1, players, Mode);
         }
     }
 }
