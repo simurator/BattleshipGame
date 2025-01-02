@@ -26,7 +26,7 @@ namespace BattleshipGame
                     int x = -1;
                     while (x < 0 || x >= board.Grid.Count)
                     {
-                        Console.Write("Enter X coordinate (0 to {0}): ", board.Grid.Count - 1);
+                        Console.Write("Enter X coordinate (0 to {0}): ", Math.Sqrt(board.Grid.Count));
                         if (!int.TryParse(Console.ReadLine(), out x) || x < 0 || x >= board.Grid.Count)
                         {
                             Console.WriteLine("Invalid input. Please enter a valid X coordinate within the board size.");
@@ -37,7 +37,7 @@ namespace BattleshipGame
                     int y = -1;
                     while (y < 0 || y >= board.Grid.Count)
                     {
-                        Console.Write("Enter Y coordinate (0 to {0}): ", board.Grid.Count - 1);
+                        Console.Write("Enter Y coordinate (0 to {0}): ", Math.Sqrt(board.Grid.Count));
                         if (!int.TryParse(Console.ReadLine(), out y) || y < 0 || y >= board.Grid.Count)
                         {
                             Console.WriteLine("Invalid input. Please enter a valid Y coordinate within the board size.");
