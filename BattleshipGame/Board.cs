@@ -18,7 +18,6 @@ namespace BattleshipGame
     {
         public List<Tile> Grid { get; set; }
         private int _size;
-
         public int GridSize => _size;
 
         public Board(int gridSize)
@@ -26,50 +25,66 @@ namespace BattleshipGame
             _size = gridSize;
             Grid = new List<Tile>();
 
-            // Initialize grid with tiles
-            for (int i = 0; i < gridSize; i++)
+            // Initialize grid with tiles - FIXED coordinate system
+            for (int y = 0; y < gridSize; y++)
             {
-                for (int j = 0; j < gridSize; j++)
+                for (int x = 0; x < gridSize; x++)
                 {
-                    Grid.Add(new Tile(i, j));  // Create Tile for each position
+                    Grid.Add(new Tile(x, y));
                 }
             }
         }
 
-        // Registers a hit on the board
-        public bool RegisterHit(int x, int y)
+        // Get tile using correct coordinate system
+        public Tile GetTile(int x, int y)
         {
-            var hitCell = Grid.FirstOrDefault(cell => cell.X == x && cell.Y == y);
-            if (hitCell != null)
-            {
-                hitCell.IsHit = true;
-                Console.WriteLine($"Hit registered at ({x}, {y})!");
-                DisplayBoard();
-                return true;
-            }
-
-            Console.WriteLine($"Miss at ({x}, {y})!");
-            DisplayBoard();
-            return false;
+            return Grid.FirstOrDefault(tile => tile.X == x && tile.Y == y);
         }
 
+        public bool RegisterHit(int x, int y)
+        {
+            var hitCell = GetTile(x, y);
 
-        // Places a ship on the board, ensuring no overlap and staying within bounds
+            if (hitCell == null)
+            {
+                Console.WriteLine("Invalid coordinates!");
+                return false;
+            }
+
+            if (hitCell.IsHit)
+            {
+                Console.WriteLine($"Position ({x}, {y}) was already hit!");
+                return false;
+            }
+
+            hitCell.IsHit = true;
+            bool wasHit = hitCell.ContainsShipPart;
+
+            Console.WriteLine(wasHit ?
+                $"Hit! Ship was hit at ({x}, {y})!" :
+                $"Miss! No ship at ({x}, {y})!");
+
+            DisplayBoard();
+            return wasHit;
+        }
+
         public PlacementStatus PlaceShip(CompositeShip ship, int x, int y, bool isHorizontal)
         {
             if (isHorizontal)
             {
                 if (x + ship.Size > _size) return PlacementStatus.OutOfBounds;
 
+                // Check for overlap
                 for (int i = 0; i < ship.Size; i++)
                 {
-                    var cell = Grid.FirstOrDefault(c => c.X == x + i && c.Y == y);
+                    var cell = GetTile(x + i, y);
                     if (cell == null || cell.ContainsShipPart) return PlacementStatus.Overlap;
                 }
 
+                // Place ship
                 for (int i = 0; i < ship.Size; i++)
                 {
-                    var cell = Grid.First(c => c.X == x + i && c.Y == y);
+                    var cell = GetTile(x + i, y);
                     cell.ContainsShipPart = true;
                     ship.Position.Add(Tuple.Create(x + i, y));
                 }
@@ -78,50 +93,56 @@ namespace BattleshipGame
             {
                 if (y + ship.Size > _size) return PlacementStatus.OutOfBounds;
 
+                // Check for overlap
                 for (int i = 0; i < ship.Size; i++)
                 {
-                    var cell = Grid.FirstOrDefault(c => c.X == x && c.Y == y + i);
+                    var cell = GetTile(x, y + i);
                     if (cell == null || cell.ContainsShipPart) return PlacementStatus.Overlap;
                 }
 
+                // Place ship
                 for (int i = 0; i < ship.Size; i++)
                 {
-                    var cell = Grid.First(c => c.X == x && c.Y == y + i);
+                    var cell = GetTile(x, y + i);
                     cell.ContainsShipPart = true;
                     ship.Position.Add(Tuple.Create(x, y + i));
                 }
             }
+
             DisplayBoard();
             return PlacementStatus.Success;
         }
 
         public void DisplayBoard()
         {
-            Console.WriteLine("Current Board State:");
+            Console.WriteLine("\nCurrent Board State:");
+            // Display column numbers
+            Console.Write("  ");
+            for (int x = 0; x < _size; x++)
+            {
+                Console.Write($"{x} ");
+            }
+            Console.WriteLine();
+
+            // Display board with row numbers
             for (int y = 0; y < _size; y++)
             {
+                Console.Write($"{y} ");
                 for (int x = 0; x < _size; x++)
                 {
                     var tile = GetTile(x, y);
                     if (tile.IsHit)
                     {
-                        Console.Write(tile.ContainsShipPart ? "X " : "O "); // "X" for hit ship part, "O" for missed shot
+                        Console.Write(tile.ContainsShipPart ? "X " : "O "); // X for hit ship, O for miss
                     }
                     else
                     {
-                        Console.Write(tile.ContainsShipPart ? "S " : ". "); // "S" for unhit ship part, "." for empty water
+                        Console.Write(tile.ContainsShipPart ? "S " : ". "); // S for ship, . for water
                     }
                 }
-                Console.WriteLine(); // Move to the next row
+                Console.WriteLine();
             }
+            Console.WriteLine();
         }
-
-        public Tile GetTile(int x, int y)
-        {
-            int index = y * GridSize + x;
-            return Grid[index];
-        }
-
     }
 }
-

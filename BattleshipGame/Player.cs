@@ -9,7 +9,7 @@ namespace BattleshipGame
     internal class Player
     {
         public string Name { get; private set; }
-        public Fleet Fleet { get; private set; }
+        public Fleet Fleet { get;  set; }
 
         public Player(string name)
         {

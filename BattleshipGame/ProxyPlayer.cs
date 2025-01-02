@@ -10,28 +10,39 @@ namespace BattleshipGame
     {
         private Player RealPlayer;
 
-        // Constructor that accepts a Player type for flexibility
         public ProxyPlayer(string name, int boardSize, int difficulty) : base(name)
         {
-            // Creating an AIPlayer or HumanPlayer depending on difficulty or other factors
+            // Create the appropriate player type
             if (difficulty > 0)
             {
-                RealPlayer = new AIPlayer(name, difficulty);  // If difficulty > 0, treat it as an AI
+                RealPlayer = new AIPlayer(name, difficulty);
             }
             else
             {
-                RealPlayer = new HumanPlayer(name, boardSize);  // Otherwise, treat it as a Human
+                RealPlayer = new HumanPlayer(name, boardSize);
+            }
+
+            // Copy the fleet from the base Player to RealPlayer
+            foreach (var ship in Fleet.Ships)
+            {
+                RealPlayer.Fleet.AddShip(ship);
             }
         }
 
         public override bool MakeMove(int x, int y, Board enemyBoard)
         {
-            return RealPlayer.MakeMove(x, y, enemyBoard);  // Delegate the move to RealPlayer
+            return RealPlayer.MakeMove(x, y, enemyBoard);
         }
 
         public override void PlaceShips(Board board)
         {
-            RealPlayer.PlaceShips(board);  // Delegate the ship placement to RealPlayer
+            RealPlayer.PlaceShips(board);
+        }
+
+        // Override property to delegate to RealPlayer's Fleet
+        public new Fleet Fleet
+        {
+            get { return RealPlayer.Fleet; }
         }
     }
 }

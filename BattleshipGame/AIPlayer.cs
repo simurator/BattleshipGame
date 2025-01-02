@@ -9,69 +9,53 @@ namespace BattleshipGame
     internal class AIPlayer : Player
     {
         private int Difficulty;
+        private Random random;
 
-        public AIPlayer(string name, int difficulty) : base(name)  // Default 10x10 board size
+        public AIPlayer(string name, int difficulty) : base(name)
         {
             Difficulty = difficulty;
+            random = new Random();
+            // Initialize fleet here instead of relying on inheritance
+            Fleet = new Fleet();
         }
 
-        // Override PlaceShips to respect board parameter and difficulty
         public override void PlaceShips(Board board)
         {
-            Console.WriteLine($"AI player places ships with difficulty {Difficulty}.");
-            Random random = new Random();
+            Console.WriteLine($"\nAI player {Name} is placing ships...");
 
             foreach (var ship in Fleet.Ships)
             {
                 bool placed = false;
-                while (!placed)
+                int attempts = 0;
+                const int maxAttempts = 100; // Zabezpieczenie przed nieskończoną pętlą
+
+                while (!placed && attempts < maxAttempts)
                 {
-                    int x = -1, y = -1;
-                    bool isHorizontal = false;
+                    attempts++;
 
-                    // Implementing different strategies based on difficulty
-                    if (Difficulty == 1)  // Easy difficulty: Random placement
-                    {
-                        x = random.Next(0, board.Grid.Count);
-                        y = random.Next(0, board.Grid.Count);
-                        isHorizontal = random.Next(0, 2) == 0;
-                    }
-                    else if (Difficulty == 2)  // Medium difficulty: Avoid edges/corners
-                    {
-                        x = random.Next(1, board.Grid.Count - 1);  // Avoid edges
-                        y = random.Next(1, board.Grid.Count - 1);
-                        isHorizontal = random.Next(0, 2) == 0;
-                    }
-                    else if (Difficulty == 3)  // Hard difficulty: Smarter placement
-                    {
-                        x = random.Next(2, board.Grid.Count - 2);  // Avoid too close to edges
-                        y = random.Next(2, board.Grid.Count - 2);
-                        isHorizontal = random.Next(0, 2) == 0;
-                    }
+                    // Wybierz losowe współrzędne i orientację
+                    int x = random.Next(0, board.GridSize);
+                    int y = random.Next(0, board.GridSize);
+                    bool isHorizontal = random.Next(2) == 0;
 
-                    // Attempt to place the ship
+                    // Próbuj umieścić statek
                     PlacementStatus status = board.PlaceShip(ship, x, y, isHorizontal);
+
                     if (status == PlacementStatus.Success)
                     {
+                        Console.WriteLine($"AI placed ship of size {ship.Size} at ({x}, {y})");
                         placed = true;
                     }
-                    else if (status == PlacementStatus.OutOfBounds)
-                    {
-                        Console.WriteLine($"AI: Failed to place ship. The position ({x}, {y}) is out of bounds.");
-                    }
-                    else if (status == PlacementStatus.Overlap)
-                    {
-                        Console.WriteLine($"AI: Failed to place ship. The position ({x}, {y}) overlaps with another ship.");
-                    }
+                }
+
+                if (!placed)
+                {
+                    Console.WriteLine($"Warning: AI failed to place ship of size {ship.Size} after {maxAttempts} attempts");
                 }
             }
-        }
 
-        // Optionally implement a smarter move-making strategy for different difficulty levels
-        public override bool MakeMove(int x, int y, Board enemyBoard)
-        {
-            Console.WriteLine($"AI player makes a move with difficulty {Difficulty}.");
-            return base.MakeMove(x, y, enemyBoard);
+            Console.WriteLine("AI finished placing ships.");
+            board.DisplayBoard();
         }
     }
 }

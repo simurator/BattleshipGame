@@ -12,26 +12,38 @@ namespace BattleshipGame
         public override void Handle(Game game)
         {
             var currentPlayer = game.Players[game.CurrentPlayerIndex];
+            var enemyPlayer = game.Players[(game.CurrentPlayerIndex + 1) % game.Players.Count];
             var enemyBoard = game.GetEnemyBoard();
 
-            Console.WriteLine($"\n{currentPlayer.Name}'s turn to attack!");
-            Console.WriteLine("\nEnemy's board:");
+            Console.Clear();
+            Console.WriteLine($"\n=== {currentPlayer.Name}'s Turn ===");
+            Console.WriteLine("\nEnemy's board (X = hit ship, O = miss, . = unknown):");
             DisplayBoardForAttack(enemyBoard);
 
             int x = -1, y = -1;
             GetValidCoordinates(game, ref x, ref y);
 
-            bool hit = enemyBoard.RegisterHit(x, y);
+            // Make the attack
+            var tile = enemyBoard.GetTile(x, y);
+            bool isHit = enemyBoard.RegisterHit(x, y);
 
-            if (hit)
+            if (isHit)
             {
                 Console.WriteLine($"\n{currentPlayer.Name} hit a ship at ({x}, {y})!");
-                UpdateFleetWithHit(game, x, y);
+                bool shipSunk = UpdateFleetWithHit(game, x, y);
+                if (shipSunk)
+                {
+                    Console.WriteLine("\n*** SHIP SUNK! ***");
+                }
             }
             else
             {
                 Console.WriteLine($"\n{currentPlayer.Name} missed at ({x}, {y}).");
             }
+
+            // Show the updated board after the attack
+            Console.WriteLine("\nUpdated enemy board:");
+            DisplayBoardForAttack(enemyBoard);
 
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
@@ -42,23 +54,33 @@ namespace BattleshipGame
 
         public override void NextState(Game game)
         {
-            // Sprawdź czy któryś gracz przegrał
             var enemyPlayer = game.Players[(game.CurrentPlayerIndex + 1) % game.Players.Count];
+
+            // Check if the game is over
             if (enemyPlayer.Fleet.IsDefeated())
             {
+                var winner = game.Players[game.CurrentPlayerIndex];
+                Console.WriteLine($"\n=== GAME OVER ===");
+                Console.WriteLine($"{winner.Name} has won the game!");
                 game.State = new EndGameState();
-                Console.WriteLine($"{game.Players[game.CurrentPlayerIndex].Name} wins!");
             }
             else
             {
-                // Przełącz na następnego gracza
                 game.SwitchTurns();
             }
         }
 
         private void DisplayBoardForAttack(Board board)
         {
-            Console.WriteLine("  0 1 2 3 4 5 6 7 8 9");
+            // Display column numbers
+            Console.Write("  ");
+            for (int x = 0; x < board.GridSize; x++)
+            {
+                Console.Write($"{x} ");
+            }
+            Console.WriteLine();
+
+            // Display board with row numbers
             for (int y = 0; y < board.GridSize; y++)
             {
                 Console.Write($"{y} ");
@@ -67,18 +89,19 @@ namespace BattleshipGame
                     var tile = board.GetTile(x, y);
                     if (tile.IsHit)
                     {
-                        Console.Write(tile.ContainsShipPart ? "X " : "O ");
+                        Console.Write(tile.ContainsShipPart ? "X " : "O "); // X for hit ship, O for miss
                     }
                     else
                     {
-                        Console.Write(". "); // Ukrywa statki przeciwnika
+                        Console.Write(". "); // Hidden/unknown cells
                     }
                 }
                 Console.WriteLine();
             }
+            Console.WriteLine();
         }
 
-        private void UpdateFleetWithHit(Game game, int x, int y)
+        private bool UpdateFleetWithHit(Game game, int x, int y)
         {
             var enemyPlayer = game.Players[(game.CurrentPlayerIndex + 1) % game.Players.Count];
 
@@ -87,17 +110,13 @@ namespace BattleshipGame
                 if (ship.Position.Any(pos => pos.Item1 == x && pos.Item2 == y))
                 {
                     ship.TakeHit(x, y);
-                    if (ship.IsSunk())
-                    {
-                        Console.WriteLine("Ship sunk!");
-                    }
-                    break;
+                    return ship.IsSunk(); // Return true if the ship was sunk by this hit
                 }
             }
+
+            return false;
         }
 
-
-        // Method to handle coordinate input and ensure it's valid
         private void GetValidCoordinates(Game game, ref int x, ref int y)
         {
             var enemyBoard = game.GetEnemyBoard();
@@ -107,34 +126,39 @@ namespace BattleshipGame
             {
                 try
                 {
-                    Console.Write($"Enter X coordinate (0 to {enemyBoard.GridSize - 1}): ");
-                    x = int.Parse(Console.ReadLine());
+                    Console.Write($"\nEnter X coordinate (0-{enemyBoard.GridSize - 1}): ");
+                    string xInput = Console.ReadLine();
 
-                    Console.Write($"Enter Y coordinate (0 to {enemyBoard.GridSize - 1}): ");
-                    y = int.Parse(Console.ReadLine());
+                    Console.Write($"Enter Y coordinate (0-{enemyBoard.GridSize - 1}): ");
+                    string yInput = Console.ReadLine();
 
-                    // Sprawdź czy koordynaty są w granicach planszy
-                    if (x >= 0 && x < enemyBoard.GridSize && y >= 0 && y < enemyBoard.GridSize)
+                    // Validate the input is numeric
+                    if (!int.TryParse(xInput, out x) || !int.TryParse(yInput, out y))
                     {
-                        // Sprawdź czy pole nie było już atakowane
-                        var tile = enemyBoard.GetTile(x, y);
-                        if (!tile.IsHit)
-                        {
-                            validInput = true;
-                        }
-                        else
-                        {
-                            Console.WriteLine("This position has already been attacked. Choose different coordinates.");
-                        }
+                        Console.WriteLine("Invalid input! Please enter numbers only.");
+                        continue;
                     }
-                    else
+
+                    // Check if coordinates are within bounds
+                    if (x < 0 || x >= enemyBoard.GridSize || y < 0 || y >= enemyBoard.GridSize)
                     {
-                        Console.WriteLine("Coordinates are out of bounds. Try again.");
+                        Console.WriteLine($"Coordinates must be between 0 and {enemyBoard.GridSize - 1}!");
+                        continue;
                     }
+
+                    // Check if the position was already attacked
+                    var tile = enemyBoard.GetTile(x, y);
+                    if (tile.IsHit)
+                    {
+                        Console.WriteLine("This position has already been attacked! Choose different coordinates.");
+                        continue;
+                    }
+
+                    validInput = true;
                 }
-                catch (FormatException)
+                catch (Exception)
                 {
-                    Console.WriteLine("Invalid input. Please enter valid integers for coordinates.");
+                    Console.WriteLine("Invalid input! Please try again.");
                 }
             }
         }
