@@ -8,20 +8,20 @@ namespace BattleshipGame
 {
     internal class Game
     {
-        public List<Board> Boards { get; private set; }  // Lista plansz dla każdego gracza
+        public List<Board> Boards { get; private set; }
         public List<Player> Players { get; private set; }
         public GameState State { get; set; }
         public List<PlayerCommand> History { get; private set; }
-        public int CurrentPlayerIndex { get;  set; }
+        public int CurrentPlayerIndex { get; set; }
 
         public Game(int boardSize, List<Player> players, string mode)
         {
+            Players = players;
             Boards = new List<Board>
             {
-                new Board(boardSize),  // Plansza dla gracza 1
-                new Board(boardSize)   // Plansza dla gracza 2
+                new Board(boardSize, this),  // Przekazanie referencji this do Board
+                new Board(boardSize, this)   // Przekazanie referencji this do Board
             };
-            Players = players;
             State = new SetupState();
             History = new List<PlayerCommand>();
             CurrentPlayerIndex = 0;

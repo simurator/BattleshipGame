@@ -22,14 +22,19 @@ namespace BattleshipGame
 
         public bool IsDefeated()
         {
-            // Debugowanie stanu floty
-            Console.WriteLine($"Checking fleet status: {Ships.Count} ships total");
-            foreach (var ship in Ships)
+            if (Ships.Count == 0)
             {
-                Console.WriteLine($"Ship status: {ship.HitParts}/{ship.Size} hits");
+                return false;
             }
 
-            return Ships.All(ship => ship.IsSunk());
+            foreach (var ship in Ships)
+            {
+                if (!ship.IsSunk())
+                {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

@@ -12,7 +12,6 @@ namespace BattleshipGame
         public override void Handle(Game game)
         {
             var currentPlayer = game.Players[game.CurrentPlayerIndex];
-            var enemyPlayer = game.Players[(game.CurrentPlayerIndex + 1) % game.Players.Count];
             var enemyBoard = game.GetEnemyBoard();
 
             Console.Clear();
@@ -20,54 +19,54 @@ namespace BattleshipGame
             Console.WriteLine("\nEnemy's board (X = hit ship, O = miss, . = unknown):");
             DisplayBoardForAttack(enemyBoard);
 
-            int x = -1, y = -1;
-            GetValidCoordinates(game, ref x, ref y);
+            bool isAI = currentPlayer is AIPlayer || (currentPlayer is ProxyPlayer && ((ProxyPlayer)currentPlayer).RealPlayer is AIPlayer);
 
-            // Make the attack
-            var tile = enemyBoard.GetTile(x, y);
-            bool isHit = enemyBoard.RegisterHit(x, y);
-
-            if (isHit)
+            if (isAI)
             {
-                Console.WriteLine($"\n{currentPlayer.Name} hit a ship at ({x}, {y})!");
-                bool shipSunk = UpdateFleetWithHit(game, x, y);
-                if (shipSunk)
-                {
-                    Console.WriteLine("\n*** SHIP SUNK! ***");
-                }
+                // AI wykonuje ruch
+                currentPlayer.MakeMove(0, 0, enemyBoard); // współrzędne są ignorowane dla AI
             }
             else
             {
-                Console.WriteLine($"\n{currentPlayer.Name} missed at ({x}, {y}).");
+                // Ludzki gracz wykonuje ruch
+                int x = -1, y = -1;
+                GetValidCoordinates(game, ref x, ref y);
+                currentPlayer.MakeMove(x, y, enemyBoard);
             }
-
-            // Show the updated board after the attack
-            Console.WriteLine("\nUpdated enemy board:");
-            DisplayBoardForAttack(enemyBoard);
 
             Console.WriteLine("\nPress any key to continue...");
             Console.ReadKey();
             Console.Clear();
 
-            NextState(game);
-        }
-
-        public override void NextState(Game game)
-        {
+            // Sprawdź czy flota przeciwnika została zniszczona
             var enemyPlayer = game.Players[(game.CurrentPlayerIndex + 1) % game.Players.Count];
-
-            // Check if the game is over
             if (enemyPlayer.Fleet.IsDefeated())
             {
-                var winner = game.Players[game.CurrentPlayerIndex];
                 Console.WriteLine($"\n=== GAME OVER ===");
-                Console.WriteLine($"{winner.Name} has won the game!");
+                Console.WriteLine($"{currentPlayer.Name} has won the game!");
                 game.State = new EndGameState();
             }
             else
             {
                 game.SwitchTurns();
             }
+        }
+
+        public override void NextState(Game game)
+        {
+            var enemyPlayer = game.Players[(game.CurrentPlayerIndex + 1) % game.Players.Count];
+
+            // Check if all enemy ships are sunk
+            if (enemyPlayer.Fleet.IsDefeated())
+            {
+                var winner = game.Players[game.CurrentPlayerIndex];
+                Console.WriteLine($"\n=== GAME OVER ===");
+                Console.WriteLine($"{winner.Name} has won the game!");
+                game.State = new EndGameState();
+                return;
+            }
+
+            game.SwitchTurns();
         }
 
         private void DisplayBoardForAttack(Board board)

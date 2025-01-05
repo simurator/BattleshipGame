@@ -19,13 +19,14 @@ namespace BattleshipGame
         public List<Tile> Grid { get; set; }
         private int _size;
         public int GridSize => _size;
+        private Game _game; // Referencja do Game
 
-        public Board(int gridSize)
+        public Board(int gridSize, Game game)
         {
             _size = gridSize;
+            _game = game;
             Grid = new List<Tile>();
 
-            // Initialize grid with tiles - FIXED coordinate system
             for (int y = 0; y < gridSize; y++)
             {
                 for (int x = 0; x < gridSize; x++)
@@ -35,36 +36,42 @@ namespace BattleshipGame
             }
         }
 
-        // Get tile using correct coordinate system
-        public Tile GetTile(int x, int y)
-        {
-            return Grid.FirstOrDefault(tile => tile.X == x && tile.Y == y);
-        }
-
         public bool RegisterHit(int x, int y)
         {
             var hitCell = GetTile(x, y);
 
-            if (hitCell == null)
+            if (hitCell == null || hitCell.IsHit)
             {
-                Console.WriteLine("Invalid coordinates!");
-                return false;
-            }
-
-            if (hitCell.IsHit)
-            {
-                Console.WriteLine($"Position ({x}, {y}) was already hit!");
                 return false;
             }
 
             hitCell.IsHit = true;
             bool wasHit = hitCell.ContainsShipPart;
 
-            Console.WriteLine(wasHit ?
-                $"Hit! Ship was hit at ({x}, {y})!" :
-                $"Miss! No ship at ({x}, {y})!");
+            if (wasHit)
+            {
+                Console.WriteLine($"\nHIT at ({x}, {y})!");
 
-            DisplayBoard();
+                // Sprawdź, czy jakiś statek został zatopiony
+                var fleet = _game.Players[(_game.CurrentPlayerIndex + 1) % _game.Players.Count].Fleet;
+                foreach (var ship in fleet.Ships)
+                {
+                    if (ship.Position.Any(pos => pos.Item1 == x && pos.Item2 == y))
+                    {
+                        ship.TakeHit(x, y);
+                        if (ship.IsSunk())
+                        {
+                            Console.WriteLine("\n*** SHIP SUNK! ***");
+                        }
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine($"\nMISS at ({x}, {y}).");
+            }
+
             return wasHit;
         }
 
@@ -143,6 +150,23 @@ namespace BattleshipGame
                 Console.WriteLine();
             }
             Console.WriteLine();
+        }
+        public Tile GetTile(int x, int y)
+        {
+            if (x < 0 || x >= _size || y < 0 || y >= _size)
+            {
+                return null;
+            }
+
+            // Konwersja współrzędnych 2D na indeks w liście 1D
+            int index = y * _size + x;
+
+            if (index >= 0 && index < Grid.Count)
+            {
+                return Grid[index];
+            }
+
+            return null;
         }
     }
 }

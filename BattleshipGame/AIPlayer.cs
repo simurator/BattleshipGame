@@ -8,15 +8,25 @@ namespace BattleshipGame
 {
     internal class AIPlayer : Player
     {
-        private int Difficulty;
         private Random random;
+        private int _difficulty;
 
         public AIPlayer(string name, int difficulty) : base(name)
         {
-            Difficulty = difficulty;
             random = new Random();
-            // Initialize fleet here instead of relying on inheritance
-            Fleet = new Fleet();
+            _difficulty = difficulty;
+        }
+
+        public override bool MakeMove(int x, int y, Board enemyBoard)
+        {
+            // AI wybiera losowe współrzędne, które nie były jeszcze atakowane
+            do
+            {
+                x = random.Next(0, enemyBoard.GridSize);
+                y = random.Next(0, enemyBoard.GridSize);
+            } while (enemyBoard.GetTile(x, y).IsHit);
+
+            return enemyBoard.RegisterHit(x, y);
         }
 
         public override void PlaceShips(Board board)
@@ -26,31 +36,18 @@ namespace BattleshipGame
             foreach (var ship in Fleet.Ships)
             {
                 bool placed = false;
-                int attempts = 0;
-                const int maxAttempts = 100; // Zabezpieczenie przed nieskończoną pętlą
-
-                while (!placed && attempts < maxAttempts)
+                while (!placed)
                 {
-                    attempts++;
-
-                    // Wybierz losowe współrzędne i orientację
                     int x = random.Next(0, board.GridSize);
                     int y = random.Next(0, board.GridSize);
                     bool isHorizontal = random.Next(2) == 0;
 
-                    // Próbuj umieścić statek
                     PlacementStatus status = board.PlaceShip(ship, x, y, isHorizontal);
-
                     if (status == PlacementStatus.Success)
                     {
-                        Console.WriteLine($"AI placed ship of size {ship.Size} at ({x}, {y})");
                         placed = true;
+                        Console.WriteLine($"AI placed {ship.Size}-mast ship at ({x}, {y})");
                     }
-                }
-
-                if (!placed)
-                {
-                    Console.WriteLine($"Warning: AI failed to place ship of size {ship.Size} after {maxAttempts} attempts");
                 }
             }
 
